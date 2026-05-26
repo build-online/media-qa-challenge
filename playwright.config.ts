@@ -6,7 +6,6 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
   testDir: './tests',
-  testIgnore: '**/fixtures/**',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -16,11 +15,11 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-
   projects: [
     {
       name: 'setup',
-      testMatch: /.*\/fixtures\/auth\.setup\.ts/,
+      testDir: './fixtures',
+      testMatch: 'auth.setup.ts',
     },
     {
       name: 'chromium',
@@ -40,9 +39,7 @@ export default defineConfig({
     },
     {
       name: 'guest',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });
