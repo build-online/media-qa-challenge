@@ -15,11 +15,11 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-
   projects: [
     {
       name: 'setup',
-      testMatch: '**/fixtures/auth.setup.ts',
+      testDir: './fixtures',
+      testMatch: 'auth.setup.ts',
     },
     {
       name: 'chromium',
@@ -39,9 +39,7 @@ export default defineConfig({
     },
     {
       name: 'guest',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });
