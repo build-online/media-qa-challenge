@@ -1,0 +1,16 @@
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/*.json
+
+# Claude Code
+.claude/
