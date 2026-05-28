@@ -9,6 +9,8 @@ test.describe('Home Page', () => {
 
     await expect(guestPage).toHaveTitle(/Tithe\.?ly Media/i);
     await expect(guestPage.locator(MEDIA_CARD.link).first()).toBeVisible();
+    // Verify cards have thumbnails, not just empty anchor tags
+    await expect(guestPage.locator(MEDIA_CARD.image).first()).toBeVisible();
     const count = await guestPage.locator(MEDIA_CARD.link).count();
     expect(count).toBeGreaterThan(3);
   });
@@ -18,8 +20,10 @@ test.describe('Home Page', () => {
 
     await expect(guestPage.locator(HOME.categoryCard).first()).toBeVisible();
     await expect(guestPage.locator(HOME.categoryCard).first().locator('img')).toBeVisible();
-    expect(await guestPage.locator(HOME.categoryCard).count()).toBeGreaterThan(0);
-    await expect(guestPage.locator(HOME.categoryCard).first()).toContainText(/.+/);
+    // At least 3 categories expected on the home page
+    expect(await guestPage.locator(HOME.categoryCard).count()).toBeGreaterThan(2);
+    // Category must have a real label — /.+/ passes on any non-empty string including spaces
+    await expect(guestPage.locator(HOME.categoryCard).first()).toContainText(/\w{3,}/);
   });
 
   test('HOME-3: sidebar navigation contains all section links', async ({ authenticatedPage }) => {

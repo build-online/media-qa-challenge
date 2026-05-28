@@ -7,8 +7,12 @@ test.describe('Authentication', () => {
   test('@smoke AUTH-1: unauthenticated user visiting /auth/login redirects to SSO', async ({ guestPage }) => {
     await guestPage.goto(BASE_URL + '/auth/login', { waitUntil: 'networkidle' });
 
-    expect(guestPage.url()).not.toContain('media.tithelyqa.com/auth/login');
-    expect(guestPage.url()).toMatch(/tithelyqa\.com|accounts\.|sso\./);
+    const finalUrl = guestPage.url();
+    // Must have left the media app entirely — any remaining path on media.tithelyqa.com
+    // (e.g. a silent redirect to /home) would be a broken SSO flow.
+    expect(finalUrl).not.toContain('media.tithelyqa.com');
+    // Must land on a recognised auth/SSO host, not just any subdomain
+    expect(finalUrl).toMatch(/tithelyqa\.com|accounts\.|sso\./);
   });
 
   test('@smoke AUTH-2: authenticated user on /home does not see login button', async ({ authenticatedPage }) => {

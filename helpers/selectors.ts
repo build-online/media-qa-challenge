@@ -38,6 +38,12 @@ export const COLLECTIONS = {
   image: 'div.items-grid img',
 };
 
+export const SERMON_KITS = {
+  // Search page renders kits as direct links — no div.items-grid wrapper like Collections
+  card: 'main a[href*="/sermon-kits/"]',
+  image: 'main a[href*="/sermon-kits/"] img',
+};
+
 export const HOME = {
   categoryCard: 'main a[href*="filter[type]"]',
   categoryCardImage: 'main a[href*="filter[type]"] img',

@@ -56,9 +56,10 @@ setup('authenticate', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto(BASE_URL + '/home', { waitUntil: 'networkidle' });
 
-  const isAuthenticated = await page.locator('a[href*="/my-media"]').count() > 0;
+  const loginLinkCount = await page.locator('a[href*="/auth/login"]').count();
+  const isAuthenticated = loginLinkCount === 0;
   if (!isAuthenticated) {
-    throw new Error('Auth failed: check SESSION_TOKEN, LARAVEL_SESSION and XSRF_TOKEN in .env');
+    throw new Error('Auth failed: login links still visible — check SESSION_TOKEN, LARAVEL_SESSION and XSRF_TOKEN in .env');
   }
   console.log('Auth successful');
 
