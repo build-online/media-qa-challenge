@@ -6,6 +6,20 @@ export const NAV_LINKS = {
   favorites: 'a[href="/favorites"]',
 };
 
+export const NAV = {
+  allMedia: 'ul.text-payneFire a[href*="/home"]',
+  collections: 'ul.text-payneFire a[href*="/collections"]',
+  sermonKits: 'ul.text-payneFire a[href*="sermon-kit"]',
+  favorites: 'ul.text-payneFire a[href*="/favorites"]',
+  myMedia: 'ul.text-payneFire a[href*="/my-media"]',
+  graphics: 'ul.text-payneFire a[href*="filter[type]=graphic"]',
+  video: 'ul.text-payneFire a[href*="filter[type]=video"]',
+  socialMedia: 'ul.text-payneFire a[href*="filter[type]=social"]',
+  photos: 'ul.text-payneFire a[href*="filter[type]=photo"]',
+  login: 'a[href*="/auth/login"]',
+  register: 'a[href*="/auth/register"]',
+};
+
 export const AUTH = {
   loginButton: '[data-testid="login-button"], a[href="/auth/login"]',
   registerButton: '[data-testid="register-button"], a[href="/auth/register"]',
@@ -14,7 +28,19 @@ export const AUTH = {
 export const MEDIA_CARD = {
   container: '[data-testid="media-card"], .media-card',
   title: '[data-testid="media-card-title"], .media-card__title',
-  image: '[data-testid="media-card-image"], .media-card__image img',
+  link: 'a[href*="/media/"]',
+  image: 'a[href*="/media/"] img',
+};
+
+export const COLLECTIONS = {
+  grid: 'div.items-grid',
+  card: 'div.items-grid a',
+  image: 'div.items-grid img',
+};
+
+export const HOME = {
+  categoryCard: 'main a[href*="filter[type]"]',
+  categoryCardImage: 'main a[href*="filter[type]"] img',
 };
 
 export const SEARCH = {
