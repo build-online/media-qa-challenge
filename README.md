@@ -57,9 +57,37 @@ cp .env.example .env
 
 The app uses Tithe.ly SSO (external provider) protected by reCAPTCHA, which makes programmatic login through the UI not possible.
 
-The solution is to inject the JWT directly as a `session_token` cookie via Playwright's `storageState`. The `setup` project runs once before any tests, injects the cookie, navigates to the app to validate the session, and saves the browser state to `playwright/.auth/user.json`. All subsequent tests reuse that saved state.
+The solution is to inject three cookies directly from an existing browser session. The setup project reads these cookies from `.env`, injects them into a Playwright context, navigates to the app to validate the session, and saves the full browser state to `playwright/.auth/user.json`. All tests reuse that saved state.
 
-> **Note:** The token expires periodically. When tests start failing with unexpected redirects to the login page, refresh the `API_TOKEN` value in your `.env` by repeating the steps above.
+### Required cookies
+
+| Env var | Cookie name | Description |
+|---|---|---|
+| `SESSION_TOKEN` | `session_token` | JWT issued after SSO |
+| `LARAVEL_SESSION` | `tithely_media_staging_session` | Laravel server-side session |
+| `XSRF_TOKEN` | `XSRF-TOKEN` | CSRF protection token |
+
+### How to get the cookie values
+
+1. Open [https://media.tithelyqa.com](https://media.tithelyqa.com) in your browser
+2. Log in manually via the SSO flow
+3. Open **DevTools → Application → Cookies → media.tithelyqa.com**
+4. Copy the values for `session_token`, `tithely_media_staging_session`, and `XSRF-TOKEN`
+5. Paste them into `.env` as `SESSION_TOKEN`, `LARAVEL_SESSION`, and `XSRF_TOKEN`
+
+Then run the setup:
+
+```bash
+npx playwright test --project=setup
+```
+
+### Refreshing the session
+
+Cookies expire periodically. When tests start failing with unexpected redirects to the login page or auth errors, repeat the steps above to get fresh cookie values and run the setup again.
+
+### CI/CD
+
+Add `SESSION_TOKEN`, `LARAVEL_SESSION`, and `XSRF_TOKEN` as secrets in **GitHub → Settings → Secrets and variables → Actions**. The CI pipeline reads them automatically via environment variables.
 
 ## Running Tests
 
@@ -147,9 +175,9 @@ Configure these in **GitHub → Settings → Secrets and variables → Actions**
 | Secret | Description |
 |---|---|
 | `BASE_URL` | Target environment URL |
-| `TEST_USER_EMAIL` | Test user email |
-| `TEST_USER_PASSWORD` | Test user password |
-| `API_TOKEN` | JWT session token |
+| `SESSION_TOKEN` | `session_token` cookie value |
+| `LARAVEL_SESSION` | `tithely_media_staging_session` cookie value |
+| `XSRF_TOKEN` | `XSRF-TOKEN` cookie value |
 
 ## Tagging Convention
 

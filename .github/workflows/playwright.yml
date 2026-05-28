@@ -31,9 +31,9 @@ jobs:
         run: npx playwright test --project=setup --project=${{ matrix.project }}
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
-          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          API_TOKEN: ${{ secrets.API_TOKEN }}
+          SESSION_TOKEN: ${{ secrets.SESSION_TOKEN }}
+          LARAVEL_SESSION: ${{ secrets.LARAVEL_SESSION }}
+          XSRF_TOKEN: ${{ secrets.XSRF_TOKEN }}
 
       - uses: actions/upload-artifact@v4
         if: failure()
