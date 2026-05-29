@@ -77,14 +77,57 @@ export const MEDIA_ITEM = {
 
 export const SEARCH = {
   input: 'input[type="search"], input[placeholder*="Search" i], [data-testid="search-input"]',
-  emptyStateText: /no results|no matches|nothing found|couldn.?t find|0 results/i,
+  emptyStateText: /No Media to Display/i,
   filterButton: '[data-testid="filter-button"], button:has-text("Filter")',
-  mediaTypeOption:
-    '[data-testid="filter-media-type"], [role="menuitem"]:has-text("Media type"), button:has-text("Media type")',
-  mediaTypeDropdown:
-    '[data-testid="media-type-dropdown"], button[aria-haspopup]:has-text("Media type"), select[name="media_type"]',
-  photoOption:
-    '[data-testid="media-type-photo"], [role="option"]:has-text("Photo"), li:has-text("Photo")',
-  applyFilterButton:
-    '[data-testid="apply-filter"], button:has-text("Apply filter"), button:has-text("Apply")',
+  mediaTypeOption: '[data-testid="filter-type-toggle"], label:has-text("Media Type")',
+  mediaTypeDropdown:'[data-testid="filter-type-select"], select[name="media_type"]',
+  photoOption:'photo',
+  applyFilterButton: '[data-testid="apply-filters-button"], button:has-text("Apply Filters")',
+};
+
+export const FAVORITES = {
+  // Heart toggle on the media detail page — bg-aquamarine when favorited, border-2 border-yank when not
+  favoriteButton: 'button.btn.bg-aquamarine, button.btn.border-2.border-yank',
+  favoritedButton: 'button.btn.bg-aquamarine',
+  unfavoritedButton: 'button.btn.border-2.border-yank',
+  // Favorites page empty state
+  emptyStateText: /No more media to display/i,
+};
+
+// NOTE: My Media selectors are placeholders pending real-DOM inspection — refine like SEARCH/FAVORITES were.
+export const MY_MEDIA = {
+  // Folder cards on /my-media (each links into /my-media/:folder)
+  folderCard: '[dusk="folder-card"], main a[href*="/my-media/"]',
+  emptyStateText: /No more items to display /i,
+  newFolderButton: '[dusk="new-folder-button"], button:has-text("New Folder"), button:has-text("Create Folder")',
+  folderNameInput: '[dusk="folder-name-input"], input[name="name"], input[placeholder*="folder" i]',
+  saveFolderButton: '[dusk="save-folder-button"], button:has-text("Create"), button:has-text("Save")',
+  // Per-folder context menu actions
+  folderMenuButton: '[dusk="folder-menu"], button[aria-haspopup="menu"]',
+  renameOption: '[dusk="folder-rename"], [role="menuitem"]:has-text("Rename"), button:has-text("Rename")',
+  renameInput: '[dusk="folder-rename-input"], input[name="name"]',
+  deleteOption: '[dusk="folder-delete"], [role="menuitem"]:has-text("Delete"), button:has-text("Delete")',
+  confirmDeleteButton: '[dusk="confirm-delete"], button:has-text("Delete"), button:has-text("Confirm")',
+  // Church item upload + cards inside a folder
+  uploadInput: 'input[type="file"]',
+  churchItem: '[dusk="church-item"], main a[href*="/media/"]',
+  churchItemImage: '[dusk="church-item"] img, main a[href*="/media/"] img',
+  churchItemFavoriteButton: 'button.btn.bg-aquamarine, button.btn.border-2.border-yank',
+  moveOption: '[dusk="item-move"], [role="menuitem"]:has-text("Move"), button:has-text("Move")',
+  moveDestinationOption: '[dusk="move-destination"], [role="option"], li',
+  confirmMoveButton: '[dusk="confirm-move"], button:has-text("Move"), button:has-text("Confirm")',
+  itemDeleteOption: '[dusk="item-delete"], [role="menuitem"]:has-text("Delete"), button:has-text("Delete")',
+};
+
+// NOTE: Profile selectors are placeholders pending real-DOM inspection — refine like SEARCH/FAVORITES were.
+export const PROFILE = {
+  nameInput: '[dusk="profile-name"], input[name="name"], input[name="first_name"]',
+  emailInput: '[dusk="profile-email"], input[name="email"], input[type="email"]',
+  saveButton: '[dusk="profile-save"], button:has-text("Save")',
+  successMessage: '[dusk="toast-success"], [role="status"], .toast-success, .alert-success',
+  currentPasswordInput: 'input[name="current_password"], input[name="old_password"]',
+  newPasswordInput: 'input[name="password"], input[name="new_password"]',
+  confirmPasswordInput: 'input[name="password_confirmation"], input[name="confirm_password"]',
+  changePasswordButton: '[dusk="change-password"], button:has-text("Change Password"), button:has-text("Update Password")',
+  validationError: '[dusk="validation-error"], [role="alert"], .invalid-feedback, .text-red, .error',
 };
