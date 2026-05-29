@@ -94,40 +94,66 @@ export const FAVORITES = {
   emptyStateText: /No more media to display/i,
 };
 
-// NOTE: My Media selectors are placeholders pending real-DOM inspection — refine like SEARCH/FAVORITES were.
+// /my-media — all selectors are from the real DOM. The 3-dot dropdown menus (folder + item) share
+// one component (outer panel + each option = div.p-2.flex with <p class="text-xs text-yank">Label</p>);
+// create/rename modals share input[name="folder_name"]; the delete confirm dialog is shared by
+// folder + item delete.
 export const MY_MEDIA = {
-  // Folder cards on /my-media (each links into /my-media/:folder)
-  folderCard: '[dusk="folder-card"], main a[href*="/my-media/"]',
-  emptyStateText: /No more items to display /i,
-  newFolderButton: '[dusk="new-folder-button"], button:has-text("New Folder"), button:has-text("Create Folder")',
-  folderNameInput: '[dusk="folder-name-input"], input[name="name"], input[placeholder*="folder" i]',
-  saveFolderButton: '[dusk="save-folder-button"], button:has-text("Create"), button:has-text("Save")',
-  // Per-folder context menu actions
-  folderMenuButton: '[dusk="folder-menu"], button[aria-haspopup="menu"]',
-  renameOption: '[dusk="folder-rename"], [role="menuitem"]:has-text("Rename"), button:has-text("Rename")',
-  renameInput: '[dusk="folder-rename-input"], input[name="name"]',
-  deleteOption: '[dusk="folder-delete"], [role="menuitem"]:has-text("Delete"), button:has-text("Delete")',
-  confirmDeleteButton: '[dusk="confirm-delete"], button:has-text("Delete"), button:has-text("Confirm")',
-  // Church item upload + cards inside a folder
-  uploadInput: 'input[type="file"]',
-  churchItem: '[dusk="church-item"], main a[href*="/media/"]',
-  churchItemImage: '[dusk="church-item"] img, main a[href*="/media/"] img',
-  churchItemFavoriteButton: 'button.btn.bg-aquamarine, button.btn.border-2.border-yank',
-  moveOption: '[dusk="item-move"], [role="menuitem"]:has-text("Move"), button:has-text("Move")',
-  moveDestinationOption: '[dusk="move-destination"], [role="option"], li',
-  confirmMoveButton: '[dusk="confirm-move"], button:has-text("Move"), button:has-text("Confirm")',
-  itemDeleteOption: '[dusk="item-delete"], [role="menuitem"]:has-text("Delete"), button:has-text("Delete")',
+  heading: 'main h4', // "My Media (16)" at root, "<Folder name> (n)" inside a folder
+  insideFolderBody: '#inside-folder-body', // unique container shown only inside /my-media/:folder
+  backButton: 'p.text-xs:has-text("Back")',
+  newFolderButton: 'button:has-text("New Folder")',
+  uploadFileButton: 'button:has-text("Upload File")',
+  uploadInput: 'input[type="file"][name="files"]', // dropzone input revealed by Upload File
+  folderName: 'main p.text-center.text-payne', // folder label (folders are click-to-open divs, no href)
+  churchItem: 'main div[id="parent"]', // church item card (the app reuses id="parent")
+  churchItemImage: 'main div[id="parent"] img',
+  emptyStateText: /No more items to display|No results/i,
+  // Create + rename folder modals (real DOM — both share input[name="folder_name"])
+  folderNameInput: 'input[name="folder_name"]',
+  createFolderSubmit: 'form button[type="submit"]:has-text("Create")',
+  renameFolderSubmit: 'form button[type="submit"]:has-text("Rename")',
+  // Folder card 3-dot trigger (distinct from the item trigger, which uses right-2 top-2 hover:bg-payneMiddle)
+  folderMenuTrigger: 'div.absolute.right-0.top-4.hover\\:bg-smoke.rounded-xl',
+  // Church-item 3-dot trigger (display:none until the card is hovered). Relative — intended to be
+  // used as `item.locator(MY_MEDIA.itemMenuTrigger)` scoped to a churchItem locator.
+  itemMenuTrigger: 'div.hidden-child',
+  // 3-dot dropdown options share a single component (outer panel = div.p-2, each option =
+  // div.p-2.flex with <p class="text-xs text-yank">Label</p>). div.p-2.flex avoids matching
+  // the outer panel itself. Same component drives the folder menu too.
+  renameOption: 'div.p-2.flex:has-text("Rename")',
+  deleteOption: 'div.p-2.flex:has-text("Delete")',
+  moveOption: 'div.p-2.flex:has-text("Move")',
+  itemEditOption: 'div.p-2.flex:has-text("Edit")',
+  itemDownloadLink: 'a[dusk="download-button"]',
+  // Delete confirm dialog (shared for folder + item delete)
+  confirmDeleteButton: 'form button[type="submit"]:has-text("Yes, I want to delete")',
+  deleteDialogHeading: 'h2:has-text("Are you sure you want to delete")',
+  // Move-into-folder dialog (real — vue-select combobox + submit button)
+  moveDialogPreview: 'div.h-32.w-32 img', // item thumbnail at top of the move dialog
+  moveCombobox: '[role="combobox"], .vs__dropdown-toggle',
+  moveDestinationOption: 'ul[role="listbox"] li, .vs__dropdown-option',
+  confirmMoveButton: 'button[type="submit"]:has-text("Move")',
 };
 
-// NOTE: Profile selectors are placeholders pending real-DOM inspection — refine like SEARCH/FAVORITES were.
+// /profile-settings/details — Profile Details form (real). The password page reuses input[name=...]
+// patterns; the success toast is vue-toastification's `.v-toast__item--success`.
 export const PROFILE = {
-  nameInput: '[dusk="profile-name"], input[name="name"], input[name="first_name"]',
-  emailInput: '[dusk="profile-email"], input[name="email"], input[type="email"]',
-  saveButton: '[dusk="profile-save"], button:has-text("Save")',
-  successMessage: '[dusk="toast-success"], [role="status"], .toast-success, .alert-success',
-  currentPasswordInput: 'input[name="current_password"], input[name="old_password"]',
-  newPasswordInput: 'input[name="password"], input[name="new_password"]',
-  confirmPasswordInput: 'input[name="password_confirmation"], input[name="confirm_password"]',
-  changePasswordButton: '[dusk="change-password"], button:has-text("Change Password"), button:has-text("Update Password")',
-  validationError: '[dusk="validation-error"], [role="alert"], .invalid-feedback, .text-red, .error',
+  // Sidebar navigation between sub-pages
+  detailsLink: 'a[href*="/profile-settings/details"]',
+  passwordLink: 'a[href*="/profile-settings/password"]',
+  // Profile Details form (real)
+  firstNameInput: 'input[name="first_name"]',
+  lastNameInput: 'input[name="last_name"]',
+  emailInput: 'input[name="email"]',
+  saveButton: 'button[type="submit"]:has-text("Save Details")',
+  // vue-toastification success toast (auto-dismisses with v-toast--fade-out)
+  successMessage: '.v-toast__item--success',
+  // Password form (real)
+  currentPasswordInput: 'input[name="current_password"]',
+  newPasswordInput: 'input[name="password"]',
+  confirmPasswordInput: 'input[name="password_confirmation"]',
+  changePasswordButton: 'button[type="submit"]:has-text("Update Password")',
+  // Mismatched-confirmation error DOM not yet captured — guess covers the likely toast variants + Tailwind inline error
+  validationError: '.v-toast__item--error, .v-toast__item--warning, [class*="text-red"]',
 };
