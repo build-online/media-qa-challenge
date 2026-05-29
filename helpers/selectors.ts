@@ -49,6 +49,32 @@ export const HOME = {
   categoryCardImage: 'main a[href*="filter[type]"] img',
 };
 
+export const MEDIA_ITEM = {
+  title: 'h1.media-title',
+  // img covers photos/graphics; video/iframe covers video players
+  preview: 'main img, main video, main iframe',
+  favoriteButton: 'button.btn.border-2.border-yank',
+  downloadButton: 'button[dusk="download-button"]',
+  loginToDownload: 'a.bnt-primary:has-text("Login")',
+  reportIssueButton: '[dusk="report-issue-button"]',
+  issueTypeLabel: 'label.cursor-pointer',
+  issueTextarea: 'textarea',
+  issueSubmit: 'button:has-text("Submit")',
+  // "Related Media" section — individual media item cards
+  relatedMediaHeading: 'h4:has-text("Related Media")',
+  relatedMediaLink: 'section:has(h4:has-text("Related Media")) a[href*="/media/"]',
+  relatedMediaImage: 'section:has(h4:has-text("Related Media")) a[href*="/media/"] img',
+  // Type labels (Photo / Video / Graphic) scoped to the Related Media section
+  relatedMediaType: 'section:has(h4:has-text("Related Media")) p.text-payneFire.text-sm.font-light.truncate.capitalize',
+  // "Also included in these Collections" section — collection cards
+  relatedHeading: 'h4:has-text("Also included")',
+  relatedCollectionLink: 'section:has(h4:has-text("Also included")) a[href*="/collections/"]',
+  relatedCollectionImage: 'section:has(h4:has-text("Also included")) a[href*="/collections/"] img',
+  editorTrigger: 'div.cursor-pointer.absolute.bg-black.bg-opacity-70',
+  editorExportButton: 'button:has-text("Export")',
+  exportDialog: '[data-test="Dialog"]',
+};
+
 export const SEARCH = {
   input: 'input[type="search"], input[placeholder*="Search" i], [data-testid="search-input"]',
   emptyStateText: /no results|no matches|nothing found|couldn.?t find|0 results/i,
