@@ -35,9 +35,7 @@ test.describe('My Media', () => {
     await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
 
     await expect(authenticatedPage.locator(MY_MEDIA.heading)).toContainText(/My Media/i);
-    // The account has folders — assert the first folder label is visible. (Combining with an
-    // empty-state `.or()` triggers a strict-mode violation because hidden infinite-status prompts
-    // ("No results :(") also match by text even though they have display:none.)
+    // The account has folders — assert the first folder label is visible. 
     await expect(authenticatedPage.locator(MY_MEDIA.folderName).first()).toBeVisible();
   });
 
@@ -57,6 +55,18 @@ test.describe('My Media', () => {
     expect(response.status()).toBeLessThan(400);
 
     await expect(folderByName(authenticatedPage, folderName).first()).toBeVisible();
+
+    //clean up 
+    await folderByName(authenticatedPage, folderName).first().scrollIntoViewIfNeeded();
+    const menuTrigger3 = folderCardByName(authenticatedPage, folderName).locator(MY_MEDIA.folderMenuTrigger).first();
+    await menuTrigger3.waitFor({ state: 'visible', timeout: 10_000 });
+    await menuTrigger3.click({ force: true });
+    await authenticatedPage.locator(MY_MEDIA.deleteOption).first().click();
+
+    await expect(authenticatedPage.locator(MY_MEDIA.deleteDialogHeading)).toBeVisible();
+    await authenticatedPage.locator(MY_MEDIA.confirmDeleteButton).first().click();
+
+    await expect(folderByName(authenticatedPage, folderName)).toHaveCount(0);
   });
 
   test('MYMEDIA-3: rename a folder', async ({ authenticatedPage }) => {
@@ -67,10 +77,13 @@ test.describe('My Media', () => {
     await createFolder(authenticatedPage, original);
     await expect(folderByName(authenticatedPage, original).first()).toBeVisible();
 
-    // Newly-created folders land at the bottom of the overflow-auto grid — scroll the 3-dot
-    // trigger into view before clicking, and force the click in case Vue's hover state interferes.
+    // The infinite-scroll grid renders the folder name <p> early but only finishes attaching the
+    // rest of the card (including the absolute-positioned 3-dot trigger) once the row is near the
+    // viewport. Scroll the name into view first so the SPA hydrates the card, then wait for the
+    // trigger before forcing the click.
+    await folderByName(authenticatedPage, original).first().scrollIntoViewIfNeeded();
     const menuTrigger = folderCardByName(authenticatedPage, original).locator(MY_MEDIA.folderMenuTrigger).first();
-    await menuTrigger.scrollIntoViewIfNeeded();
+    await menuTrigger.waitFor({ state: 'visible', timeout: 10_000 });
     await menuTrigger.click({ force: true });
     await authenticatedPage.locator(MY_MEDIA.renameOption).first().click();
 
@@ -78,7 +91,21 @@ test.describe('My Media', () => {
     await authenticatedPage.locator(MY_MEDIA.folderNameInput).first().fill(renamed);
     await authenticatedPage.locator(MY_MEDIA.renameFolderSubmit).first().click();
 
+    const menuTrigger2 = folderCardByName(authenticatedPage, renamed).locator(MY_MEDIA.folderMenuTrigger).first();
+    await menuTrigger2.scrollIntoViewIfNeeded();
     await expect(folderByName(authenticatedPage, renamed).first()).toBeVisible();
+
+    //clean up 
+    await folderByName(authenticatedPage, renamed).first().scrollIntoViewIfNeeded();
+    const menuTrigger3 = folderCardByName(authenticatedPage, renamed).locator(MY_MEDIA.folderMenuTrigger).first();
+    await menuTrigger3.waitFor({ state: 'visible', timeout: 10_000 });
+    await menuTrigger3.click({ force: true });
+    await authenticatedPage.locator(MY_MEDIA.deleteOption).first().click();
+
+    await expect(authenticatedPage.locator(MY_MEDIA.deleteDialogHeading)).toBeVisible();
+    await authenticatedPage.locator(MY_MEDIA.confirmDeleteButton).first().click();
+
+    await expect(folderByName(authenticatedPage, renamed)).toHaveCount(0);
   });
 
   test('MYMEDIA-4: delete a folder', async ({ authenticatedPage }) => {
@@ -89,9 +116,12 @@ test.describe('My Media', () => {
     await expect(folderByName(authenticatedPage, folderName).first()).toBeVisible();
 
     // Open menu → Delete, then real confirm dialog: "Are you sure..." + "Yes, I want to delete".
-    // Newly-created folders land at the bottom of an overflow-auto grid — scroll into view first.
+    // The infinite-scroll grid renders the folder name <p> early but only finishes hydrating the
+    // rest of the card (including the 3-dot trigger) once the row is near the viewport. Scroll the
+    // name into view first so the SPA hydrates the card, then wait for the trigger before clicking.
+    await folderByName(authenticatedPage, folderName).first().scrollIntoViewIfNeeded();
     const menuTrigger = folderCardByName(authenticatedPage, folderName).locator(MY_MEDIA.folderMenuTrigger).first();
-    await menuTrigger.scrollIntoViewIfNeeded();
+    await menuTrigger.waitFor({ state: 'visible', timeout: 10_000 });
     await menuTrigger.click({ force: true });
     await authenticatedPage.locator(MY_MEDIA.deleteOption).first().click();
 
@@ -121,6 +151,22 @@ test.describe('My Media', () => {
 
     // The uploaded item appears as a new church item card inside the folder
     await expect(items).toHaveCount(before + 1);
+
+    const itemsDelete = authenticatedPage.locator(MY_MEDIA.churchItem);
+    const initial = await items.count();
+
+    const item = items.last();
+    await item.hover();
+    await item.locator(MY_MEDIA.itemMenuTrigger).first().click({ force: true });
+    await authenticatedPage.locator(MY_MEDIA.deleteOption).first().click();
+
+    // Reuses the same confirm dialog ("Are you sure you want to delete this item?" / "Yes, I want to delete")
+    await expect(authenticatedPage.locator(MY_MEDIA.deleteDialogHeading)).toBeVisible();
+    await authenticatedPage.locator(MY_MEDIA.confirmDeleteButton).first().click();
+    await authenticatedPage.waitForLoadState('networkidle');
+
+    // The grid re-renders lazily after the server responds — give it more room than the 5s default
+    await expect(itemsDelete).toHaveCount(initial - 1, { timeout: 15_000 });
   });
 
   // TODO: church-item heart in the hover overlay doesn't trigger the toggle-favorite endpoint
@@ -155,6 +201,23 @@ test.describe('My Media', () => {
   test('MYMEDIA-8: delete a church item', async ({ authenticatedPage }) => {
     await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
 
+    // Enter the first folder (folders are click-to-open cards; the inner div.p-5 is the click target)
+    await authenticatedPage.locator('main div.p-5.cursor-pointer').first().click();
+    await expect(authenticatedPage.locator(MY_MEDIA.insideFolderBody)).toBeVisible();
+
+    const add = authenticatedPage.locator(MY_MEDIA.churchItem);
+    const before = await add.count();
+
+    // Open dropzone then set the file on the hidden <input name="files" class="input-file">
+    await authenticatedPage.locator(MY_MEDIA.uploadFileButton).first().click();
+    await authenticatedPage.locator(MY_MEDIA.uploadInput).first().setInputFiles({
+      name: 'qa-upload.png',
+      mimeType: 'image/png',
+      buffer: ONE_PX_PNG,
+    });
+
+    // The uploaded item appears as a new church item card inside the folder
+    await expect(add).toHaveCount(before + 1);
     const items = authenticatedPage.locator(MY_MEDIA.churchItem);
     const initial = await items.count();
 

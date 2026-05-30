@@ -12,6 +12,7 @@ test.describe('Profile Settings', () => {
   test('@smoke PROFILE-1: profile details page loads with pre-populated fields', async ({ authenticatedPage }) => {
     await authenticatedPage.goto(PROFILE_DETAILS_URL, { waitUntil: 'networkidle' });
 
+    
     const firstName = authenticatedPage.locator(PROFILE.firstNameInput);
     const email = authenticatedPage.locator(PROFILE.emailInput);
     await expect(firstName).toBeVisible();
@@ -25,14 +26,15 @@ test.describe('Profile Settings', () => {
 
     const firstName = authenticatedPage.locator(PROFILE.firstNameInput);
     const original = await firstName.inputValue();
-    const updated = `${original} QA`;
+    const updated = 'QA test';
 
     try {
+      await firstName.clear();
       await firstName.fill(updated);
       await authenticatedPage.locator(PROFILE.saveButton).click();
       await expect(authenticatedPage.locator(PROFILE.successMessage).first()).toBeVisible();
 
-      // Updated value survives a page reload (read back from the server)
+      // Updated value survives a page reload 
       await authenticatedPage.reload({ waitUntil: 'networkidle' });
       await expect(authenticatedPage.locator(PROFILE.firstNameInput)).toHaveValue(updated);
     } finally {
@@ -82,7 +84,7 @@ test.describe('Profile Settings', () => {
       }
     });
 
-    await authenticatedPage.locator(PROFILE.currentPasswordInput).fill('CurrentPass123!');
+    await authenticatedPage.locator(PROFILE.currentPasswordInput).fill('CurrentPass123!'); // todo password deberia estar encriptada
     await authenticatedPage.locator(PROFILE.newPasswordInput).fill('NewSecurePass456!');
     await authenticatedPage.locator(PROFILE.confirmPasswordInput).fill('NewSecurePass456!');
 

@@ -80,7 +80,7 @@ export const SEARCH = {
   emptyStateText: /No Media to Display/i,
   filterButton: '[data-testid="filter-button"], button:has-text("Filter")',
   mediaTypeOption: '[data-testid="filter-type-toggle"], label:has-text("Media Type")',
-  mediaTypeDropdown:'[data-testid="filter-type-select"], select[name="media_type"]',
+  mediaTypeDropdown:'[data-testid="filter-type-select"], [dusk="filter-type-select"], select[name="media_type"]',
   photoOption:'photo',
   applyFilterButton: '[data-testid="apply-filters-button"], button:has-text("Apply Filters")',
 };
@@ -145,7 +145,7 @@ export const PROFILE = {
   // Profile Details form (real)
   firstNameInput: 'input[name="first_name"]',
   lastNameInput: 'input[name="last_name"]',
-  emailInput: 'input[name="email"]',
+  emailInput: 'input[id="email"]',
   saveButton: 'button[type="submit"]:has-text("Save Details")',
   // vue-toastification success toast (auto-dismisses with v-toast--fade-out)
   successMessage: '.v-toast__item--success',

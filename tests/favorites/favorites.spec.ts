@@ -30,7 +30,8 @@ async function openFirstMediaResult(page: Page, term: string): Promise<string> {
   await expect(card).toBeVisible();
   const title = (await card.locator('img').getAttribute('alt')) ?? '';
   await card.click();
-  await page.waitForURL(/\/media\//);
+  // Default waitUntil is 'load', which hangs on chromium for /media/X pages (continuous SPA traffic)
+  await page.waitForURL(/\/media\//, { waitUntil: 'domcontentloaded' });
   return title;
 }
 
@@ -58,7 +59,8 @@ async function unfavoriteFromFavorites(page: Page, title: string): Promise<void>
   await expect(cards.first().or(emptyState.first())).toBeVisible();
   if ((await cards.count()) === 0) return;
   await cards.first().click();
-  await page.waitForURL(/\/media\//);
+  // Default waitUntil is 'load', which hangs on chromium for /media/X pages (continuous SPA traffic)
+  await page.waitForURL(/\/media\//, { waitUntil: 'domcontentloaded' });
   await setFavorite(page, false);
 }
 
