@@ -17,10 +17,12 @@
   },
   "homepage": "https://github.com/build-online/media-qa-challenge#readme",
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1"
   },
   "dependencies": {
+    "axe-playwright": "^2.2.2",
     "dotenv": "^17.4.2"
   }
 }
