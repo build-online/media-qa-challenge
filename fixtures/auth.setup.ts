@@ -54,7 +54,9 @@ setup('authenticate', async ({ browser }) => {
   ]);
 
   const page = await context.newPage();
-  await page.goto(BASE_URL + '/home', { waitUntil: 'networkidle' });
+  // domcontentloaded — /home has 4 lazy-loaded grids that prevent networkidle from firing within
+  // 30s. The toHaveCount(0) auto-wait below confirms the SPA reached the authenticated state.
+  await page.goto(BASE_URL + '/home', { waitUntil: 'domcontentloaded' });
 
   // The SPA briefly renders the guest UI (with "Login" + "Sign Up Free") while it validates the
   // injected session cookies against the backend. Auto-wait for the visible Login button to
