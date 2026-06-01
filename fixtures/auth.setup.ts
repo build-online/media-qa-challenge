@@ -1,4 +1,4 @@
-import { test as setup } from '@playwright/test';
+import { test as setup, expect } from '@playwright/test';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -56,10 +56,17 @@ setup('authenticate', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto(BASE_URL + '/home', { waitUntil: 'networkidle' });
 
-  const loginLinkCount = await page.locator('a[href*="/auth/login"]').count();
-  const isAuthenticated = loginLinkCount === 0;
-  if (!isAuthenticated) {
-    throw new Error('Auth failed: login links still visible — check SESSION_TOKEN, LARAVEL_SESSION and XSRF_TOKEN in .env');
+  // The SPA briefly renders the guest UI (with "Login" + "Sign Up Free") while it validates the
+  // injected session cookies against the backend. Auto-wait for the visible Login button to
+  // disappear (i.e. for Vue to finish hydrating the authenticated state) before saving the
+  // storage state — replaces the single-shot `.count()` check that intermittently caught the
+  // page mid-hydration.
+  try {
+    await expect(page.locator('a[href*="/auth/login"]').filter({ visible: true })).toHaveCount(0, {
+      timeout: 15_000,
+    });
+  } catch {
+    throw new Error('Auth failed: Login button still visible after 15s — refresh SESSION_TOKEN, LARAVEL_SESSION and XSRF_TOKEN in .env');
   }
   console.log('Auth successful');
 

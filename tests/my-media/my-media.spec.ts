@@ -30,7 +30,52 @@ function folderCardByName(page: Page, name: string) {
   return folderByName(page, name).locator('xpath=..').first();
 }
 
+// Per-test registry of folder names this test created. Tests that don't create folders leave it
+// empty, so the afterEach is a no-op for them.
+let createdFolders: string[] = [];
+
+// Best-effort UI cleanup: navigate to /my-media, scroll until the folder attaches, then open its
+// 3-dot menu and confirm delete. If the folder no longer exists (already deleted by the test's
+// own inline cleanup, or never created on a failed run), returns silently.
+async function deleteFolderUI(page: Page, name: string): Promise<void> {
+  await page.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
+  for (let i = 0; i < 8; i++) {
+    if (await folderByName(page, name).count() > 0) break;
+    await page.evaluate(() => {
+      window.scrollTo(0, 9_999_999);
+      document
+        .querySelectorAll('main, [class*="overflow-auto"], [class*="overflow-y"], #inside-folder-body')
+        .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999); });
+    });
+    await page.waitForTimeout(500);
+  }
+  if ((await folderByName(page, name).count()) === 0) return;
+  await folderByName(page, name).first().scrollIntoViewIfNeeded();
+  const trigger = folderCardByName(page, name).locator(MY_MEDIA.folderMenuTrigger).first();
+  await trigger.waitFor({ state: 'visible', timeout: 10_000 });
+  await trigger.click({ force: true });
+  await page.locator(MY_MEDIA.deleteOption).first().click();
+  await page.locator(MY_MEDIA.confirmDeleteButton).first().click();
+}
+
 test.describe('My Media', () => {
+  test.beforeEach(() => {
+    createdFolders = [];
+  });
+
+  test.afterEach(async ({ authenticatedPage }) => {
+    // Only runs for tests that pushed a folder name into the registry. Best-effort: errors here
+    // shouldn't mask the actual test result, so each delete is wrapped in try/catch.
+    for (const name of createdFolders) {
+      try {
+        await deleteFolderUI(authenticatedPage, name);
+      } catch {
+        // ignore — folder may already be gone or the page may be in a bad state
+      }
+    }
+    createdFolders = [];
+  });
+
   test('@smoke MYMEDIA-1: My Media page loads for authenticated user', async ({ authenticatedPage }) => {
     await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
 
@@ -43,6 +88,7 @@ test.describe('My Media', () => {
     await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
 
     const folderName = `qa-folder-${Date.now()}`;
+    createdFolders.push(folderName);
 
     const [response] = await Promise.all([
       authenticatedPage.waitForResponse(
@@ -54,7 +100,20 @@ test.describe('My Media', () => {
     // even though the create succeeded. Accept any non-error status (2xx + 3xx).
     expect(response.status()).toBeLessThan(400);
 
-    await expect(folderByName(authenticatedPage, folderName).first()).toBeVisible();
+
+    //new folder can land past the first infinite-scroll batch. Scroll multiple potential containers, in a
+    // loop, until the folder attaches (or fail explicitly via the toBeVisible below).
+    for (let i = 0; i < 8; i++) {
+      if (await folderByName(authenticatedPage, folderName).count() > 0) break;
+      await authenticatedPage.evaluate(() => {
+        window.scrollTo(0, 9_999_999);
+        document
+          .querySelectorAll('main, [class*="overflow-auto"], [class*="overflow-y"], #inside-folder-body')
+          .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999); });
+      });
+      await authenticatedPage.waitForTimeout(500);
+    }
+    await expect(folderByName(authenticatedPage, folderName).first()).toBeVisible({ timeout: 10_000 });
 
     //clean up 
     await folderByName(authenticatedPage, folderName).first().scrollIntoViewIfNeeded();
@@ -74,13 +133,25 @@ test.describe('My Media', () => {
 
     const original = `qa-rename-${Date.now()}`;
     const renamed = `${original}-edited`;
+    createdFolders.push(original);
     await createFolder(authenticatedPage, original);
-    await expect(folderByName(authenticatedPage, original).first()).toBeVisible();
+    // The grid sorts alphabetically; with 30+ accumulated test folders, the new `qa-rename-…`
+    // lands at the very bottom of vue-infinite-loading's list. window.scrollTo on a body with
+    // hidden overflow may be a no-op, and a single scroll only triggers one batch — so scroll
+    // multiple potential containers, repeatedly, until the folder attaches.
+    for (let i = 0; i < 8; i++) {
+      if (await folderByName(authenticatedPage, original).count() > 0) break;
+      await authenticatedPage.evaluate(() => {
+        window.scrollTo(0, 9_999_999);
+        document
+          .querySelectorAll('main, [class*="overflow-auto"], [class*="overflow-y"], #inside-folder-body')
+          .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999); });
+      });
+      await authenticatedPage.waitForTimeout(500);
+    }
+    await expect(folderByName(authenticatedPage, original).first()).toBeVisible({ timeout: 10_000 });
 
-    // The infinite-scroll grid renders the folder name <p> early but only finishes attaching the
-    // rest of the card (including the absolute-positioned 3-dot trigger) once the row is near the
-    // viewport. Scroll the name into view first so the SPA hydrates the card, then wait for the
-    // trigger before forcing the click.
+    // Now scroll the row into view so the SPA hydrates the rest of the card (including the trigger).
     await folderByName(authenticatedPage, original).first().scrollIntoViewIfNeeded();
     const menuTrigger = folderCardByName(authenticatedPage, original).locator(MY_MEDIA.folderMenuTrigger).first();
     await menuTrigger.waitFor({ state: 'visible', timeout: 10_000 });
@@ -90,6 +161,7 @@ test.describe('My Media', () => {
     // Real Rename modal: same input[name="folder_name"], submit text "Rename"
     await authenticatedPage.locator(MY_MEDIA.folderNameInput).first().fill(renamed);
     await authenticatedPage.locator(MY_MEDIA.renameFolderSubmit).first().click();
+    createdFolders.push(renamed);
 
     const menuTrigger2 = folderCardByName(authenticatedPage, renamed).locator(MY_MEDIA.folderMenuTrigger).first();
     await menuTrigger2.scrollIntoViewIfNeeded();
@@ -112,6 +184,7 @@ test.describe('My Media', () => {
     await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
 
     const folderName = `qa-delete-${Date.now()}`;
+    createdFolders.push(folderName);
     await createFolder(authenticatedPage, folderName);
     await expect(folderByName(authenticatedPage, folderName).first()).toBeVisible();
 
@@ -152,6 +225,7 @@ test.describe('My Media', () => {
     // The uploaded item appears as a new church item card inside the folder
     await expect(items).toHaveCount(before + 1);
 
+    //clean up
     const itemsDelete = authenticatedPage.locator(MY_MEDIA.churchItem);
     const initial = await items.count();
 
@@ -169,10 +243,52 @@ test.describe('My Media', () => {
     await expect(itemsDelete).toHaveCount(initial - 1, { timeout: 15_000 });
   });
 
-  // TODO: church-item heart in the hover overlay doesn't trigger the toggle-favorite endpoint
-  // when force-clicked. The favorite action probably routes through the item detail/modal,
-  // not the card-overlay heart. Investigate the real UI flow and rewrite when known.
-  test.skip('@smoke MYMEDIA-6: church item favorite toggle hits the toggle-favorite endpoint', async () => {});
+  test('@smoke MYMEDIA-6: church item favorite toggle hits the toggle-favorite endpoint', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
+
+    // Enter the first folder so we have a stable inside-folder context to upload into.
+    await authenticatedPage.locator('main div.p-5.cursor-pointer').first().click();
+    await expect(authenticatedPage.locator(MY_MEDIA.insideFolderBody)).toBeVisible();
+
+    // Upload a file so we have a known just-created church item to favorite (and clean up).
+    const items = authenticatedPage.locator(MY_MEDIA.churchItem);
+    const before = await items.count();
+    await authenticatedPage.locator(MY_MEDIA.uploadFileButton).first().click();
+    await authenticatedPage.locator(MY_MEDIA.uploadInput).first().setInputFiles({
+      name: 'qa-fav.png',
+      mimeType: 'image/png',
+      buffer: ONE_PX_PNG,
+    });
+    await expect(items).toHaveCount(before + 1, { timeout: 15_000 });
+
+    // The new item appears at the end of the grid — scroll to it and hover to reveal the overlay.
+    const newItem = items.last();
+    await newItem.scrollIntoViewIfNeeded();
+    await expect(newItem).toBeVisible();
+    await newItem.hover();
+
+    // The heart button has two visual states sharing the same wrapper button: outline (unfavorited,
+    // svg path d="M4.318…") and filled (favorited, svg path d="M3.172…"). A freshly-uploaded item
+    // starts unfavorited, but accepting both keeps the test resilient if state ever differs.
+    const heart = newItem
+      .locator('button:has(svg path[d^="M4.318"]), button:has(svg path[d^="M3.172"])')
+      .first();
+    const [response] = await Promise.all([
+      authenticatedPage.waitForResponse(
+        r => /\/church-media\/items\/.*toggle-favorite/.test(r.url()) && r.request().method() === 'PATCH',
+      ),
+      heart.click({ force: true }),
+    ]);
+    expect(response.status()).toBeLessThan(400);
+
+    // Cleanup: delete the uploaded item via its 3-dot menu (same pattern as MYMEDIA-8).
+    await newItem.hover();
+    await newItem.locator(MY_MEDIA.itemMenuTrigger).first().click({ force: true });
+    await authenticatedPage.locator(MY_MEDIA.deleteOption).first().click();
+    await expect(authenticatedPage.locator(MY_MEDIA.deleteDialogHeading)).toBeVisible();
+    await authenticatedPage.locator(MY_MEDIA.confirmDeleteButton).first().click();
+    await expect(items).toHaveCount(before, { timeout: 15_000 });
+  });
 
   test('MYMEDIA-7: move a church item to another folder', async ({ authenticatedPage }) => {
     await authenticatedPage.goto(BASE_URL + '/my-media', { waitUntil: 'networkidle' });
@@ -221,7 +337,7 @@ test.describe('My Media', () => {
     const items = authenticatedPage.locator(MY_MEDIA.churchItem);
     const initial = await items.count();
 
-    const item = items.first();
+    const item = items.last();
     await item.hover();
     await item.locator(MY_MEDIA.itemMenuTrigger).first().click({ force: true });
     await authenticatedPage.locator(MY_MEDIA.deleteOption).first().click();
