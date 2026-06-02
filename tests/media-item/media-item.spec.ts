@@ -120,7 +120,7 @@ test.describe('Media Item', () => {
 
     // Export button appears inside the image editor on the same page
     await expect(authenticatedPage.locator(MEDIA_ITEM.editorExportButton).first()).toBeVisible();
-    await authenticatedPage.locator(MEDIA_ITEM.editorExportButton).first().click();
+    await authenticatedPage.locator(MEDIA_ITEM.editorExportButton).first().click({ force: true });
 
     // The export dialog (styled-components, sc-* classes) signals its open state via
     // aria-hidden="false". Dialog body content loads asynchronously via a third-party

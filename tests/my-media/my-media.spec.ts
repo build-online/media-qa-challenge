@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const BASE_URL = process.env.BASE_URL || 'https://media.tithelyqa.com';
-
 // 1x1 transparent PNG used as the upload payload — avoids needing a fixture file on disk
 const ONE_PX_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -103,15 +102,16 @@ test.describe('My Media', () => {
 
     //new folder can land past the first infinite-scroll batch. Scroll multiple potential containers, in a
     // loop, until the folder attaches (or fail explicitly via the toBeVisible below).
-    for (let i = 0; i < 8; i++) {
-      if (await folderByName(authenticatedPage, folderName).count() > 0) break;
+    await authenticatedPage.reload({ waitUntil: 'networkidle' })
+    for (let i = 0; i < 15; i++) {
+      if (await folderByName(authenticatedPage, folderName).count() > 0) break
       await authenticatedPage.evaluate(() => {
-        window.scrollTo(0, 9_999_999);
+        window.scrollTo(0, 9_999_999)
         document
           .querySelectorAll('main, [class*="overflow-auto"], [class*="overflow-y"], #inside-folder-body')
-          .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999); });
-      });
-      await authenticatedPage.waitForTimeout(500);
+          .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999) })
+      })
+      await authenticatedPage.waitForTimeout(800)
     }
     await expect(folderByName(authenticatedPage, folderName).first()).toBeVisible({ timeout: 10_000 });
 
@@ -139,15 +139,16 @@ test.describe('My Media', () => {
     // lands at the very bottom of vue-infinite-loading's list. window.scrollTo on a body with
     // hidden overflow may be a no-op, and a single scroll only triggers one batch — so scroll
     // multiple potential containers, repeatedly, until the folder attaches.
-    for (let i = 0; i < 8; i++) {
-      if (await folderByName(authenticatedPage, original).count() > 0) break;
+    await authenticatedPage.reload({ waitUntil: 'networkidle' })
+    for (let i = 0; i < 15; i++) {
+      if (await folderByName(authenticatedPage, original).count() > 0) break
       await authenticatedPage.evaluate(() => {
-        window.scrollTo(0, 9_999_999);
+        window.scrollTo(0, 9_999_999)
         document
           .querySelectorAll('main, [class*="overflow-auto"], [class*="overflow-y"], #inside-folder-body')
-          .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999); });
-      });
-      await authenticatedPage.waitForTimeout(500);
+          .forEach(el => { (el as HTMLElement).scrollTo(0, 9_999_999) })
+      })
+      await authenticatedPage.waitForTimeout(800)
     }
     await expect(folderByName(authenticatedPage, original).first()).toBeVisible({ timeout: 10_000 });
 

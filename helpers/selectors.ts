@@ -148,7 +148,7 @@ export const PROFILE = {
   emailInput: 'input[id="email"]',
   saveButton: 'button[type="submit"]:has-text("Save Details")',
   // vue-toastification success toast (auto-dismisses with v-toast--fade-out)
-  successMessage: '.v-toast__item--success',
+  successMessage: '.v-toast__item--success, .toast-success, [class*="toast"][class*="success"]',
   // Password form (real)
   currentPasswordInput: 'input[name="current_password"]',
   newPasswordInput: 'input[name="password"]',

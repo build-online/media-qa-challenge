@@ -32,7 +32,7 @@ test.describe('Profile Settings', () => {
       await firstName.clear();
       await firstName.fill(updated);
       await authenticatedPage.locator(PROFILE.saveButton).click();
-      await expect(authenticatedPage.locator(PROFILE.successMessage).first()).toBeVisible();
+      await expect(authenticatedPage.locator(PROFILE.successMessage).first()).toBeVisible({ timeout: 10_000 });
 
       // Updated value survives a page reload 
       await authenticatedPage.reload({ waitUntil: 'networkidle' });

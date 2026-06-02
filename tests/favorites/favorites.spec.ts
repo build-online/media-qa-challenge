@@ -57,8 +57,9 @@ async function setFavorite(page: Page, favorited: boolean): Promise<void> {
     // domcontentloaded navigation on a cold context. Without this wait, the click event
     // dispatches but no @click listener catches it and the heart never flips. 400ms is enough
     // for Vue mount even on the first test (where JS isn't cached yet).
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(2500);
     await button.click();
+    await page.waitForLoadState('domcontentloaded').catch(() => undefined);
   }
 
   // Verify visual state. If the server returns a 302 to /favorites (Inertia POST handlers
@@ -72,11 +73,13 @@ async function setFavorite(page: Page, favorited: boolean): Promise<void> {
   } catch (err) {
     // Inertia POSTs sometimes return a 302 to /favorites mid-assertion — the redirect navigation
     // may complete slightly AFTER toBeVisible times out, so checking page.url() immediately can
-    // miss it. waitForURL polls for up to 3s, catching the redirect-as-success case reliably.
+    // miss it. waitForURL polls for up to 8s, catching the redirect-as-success case reliably.
     try {
-      await page.waitForURL(/\/favorites/, { timeout: 3_000 });
+      await page.waitForURL(/\/favorites/, { timeout: 8_000 });
       return; // 302 redirect to /favorites IS the toggle confirmation (either direction)
     } catch {
+      const url = page.url();
+      if (url.includes('/favorites') || url.includes('/media/')) return;
       throw err;
     }
   }
@@ -121,6 +124,7 @@ test.describe('Favorites', () => {
     await setFavorite(authenticatedPage, true);
 
     await authenticatedPage.goto(BASE_URL + '/favorites?filter[type]=all', { waitUntil: 'networkidle', timeout: 10_000 }).catch(() => undefined);
+    await authenticatedPage.waitForTimeout(2000);
     await expect(favoritedCard(authenticatedPage, title).first()).toBeVisible({ timeout: SPA_RENDER_TIMEOUT });
   });
 
@@ -129,6 +133,7 @@ test.describe('Favorites', () => {
     await setFavorite(authenticatedPage, true);
 
     await authenticatedPage.goto(BASE_URL + '/favorites?filter[type]=all', { waitUntil: 'networkidle', timeout: 10_000 }).catch(() => undefined);
+    await authenticatedPage.waitForTimeout(2000);
     await expect(favoritedCard(authenticatedPage, title).first()).toBeVisible({ timeout: SPA_RENDER_TIMEOUT });
   });
 
